@@ -15,7 +15,6 @@ class Board {
 		this.ySz = 50;
 		this.turn = 0;
 		this.init();
-
 	}
 
 	random() {
@@ -77,8 +76,8 @@ class Board {
 	getTurn() {
 		var keys = Object.keys(players);
 
-		print(keys[this.turn % keys.length]);
-		//return players[keys[]];
+		return(players[keys[this.turn % keys.length]]);
+		
 	}
 
 	getNeighboursDiag(r, c) {
