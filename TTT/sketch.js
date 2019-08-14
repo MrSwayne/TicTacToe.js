@@ -1,228 +1,201 @@
-var board;
-var rows = 3;
-var cols = 3;
-var players = {"X":"blue", "O":"red"};
-var gameOver = false;
-
 var textToDisplay = [];
+var game;
 
 
-class Board {
-	constructor(R, C) {
-		this.ROWS = R;
-		this.COLS = C;
-		this.xSz = 50;
-		this.ySz = 50;
-		this.turn = 0;
-		this.init();
-	}
+class Player {
 
-	random() {
-		this.board = [];
-		for(var r = 0;r < this.ROWS;r++) {
-			var row = [];
-			for(var c = 0;c < this.COLS;c++) {
-				var rand = Math.random() * 10;
-				var symbol = "";
-				if(rand < 3.3333333)
-					symbol = "X";
-				else if(rand > 6.66666)
-					symbol = "O";
-
-				row.push(new Cell(10 + this.xSz * r, 10 + this.ySz * c, this.xSz, this.ySz, symbol, players[symbol]));
-			}
-			this.board.push(row);
-		}
-	}
-
-	get(r,c) {
-		if(r > rows || c > cols || r < 0 || c < 0)
-			return;
-		return this.board[r][c];
-	}
-
-	init() {
-		this.board = [];
-		this.turn = 0;
-		for(var r = 0;r < this.ROWS;r++) {
-			var row = [];
-			for(var c = 0;c < this.COLS;c++) 
-				row.push(new Cell(10 + this.xSz * r, 10 + this.ySz * c, this.xSz, this.ySz));
-			this.board.push(row);
-		}
-	}
-
-	place(mouseX, mouseY) {
-		for(var r = 0; r < this.ROWS;r++)
-			for(var c = 0;c < this.COLS;c++)
-				if(this.board[r][c].collided(mouseX,mouseY)) {
-					var keys = Object.keys(players);
-					var index = this.turn % keys.length;
-					if(this.board[r][c].sets(keys[index], players[keys[index]])) {		
-						this.turn++;
-						return [r, c];
-					}
-				}
-		return [-1,-1];		
-	}
-
-	draw() {
-		for(var r = 0;r < this.ROWS;r++) 
-			for(var c = 0;c < this.COLS;c++){
-				this.board[r][c].draw();
-			}
-	}
-
-	getTurn() {
-		var keys = Object.keys(players);
-
-		return(players[keys[this.turn % keys.length]]);
-		
-	}
-
-	getNeighboursDiag(r, c) {
-		if(r > rows || c > cols || r < 0 || c < 0)
-			return;
-		var topLeft = [], topRight = [], bottomLeft = [], bottomRight = [];
-
-		for(var i = c - 1, j = r - 1;i >= 0 && j >= 0;i--, j--)
-			topLeft.push(this.board[j][i]);
-		for(var i = c + 1, j = r + 1; i < this.ROWS && j < this.COLS;i++, j++) {
-			bottomRight.push(this.board[j][i]);
-		}
-
-		for(var i = c + 1, j = r - 1;i < this.ROWS && j >= 0;i++,j--)
-			bottomLeft.push(this.board[j][i]);
-		for(var i = c - 1, j = r + 1;i >= 0 && j < this.COLS;i--,j++)
-			topRight.push(this.board[j][i]);
-
-		return [topLeft, topRight, bottomRight, bottomLeft];
-	}
-
-	getNeighboursStraight(r, c) {
-		if(r > rows || c > cols || r < 0 || c < 0)
-			return;
-
-		var left = [], top = [], right = [], bottom = []
-		print("getting neighbours of " + r +"," + c)
-		for(var i = 0;i < r;i++)
-			left.push(this.board[i][c]);
-		for(var i = 0;i < c;i++)
-			top.push(this.board[r][i]);
-		for(var i = r + 1; i < this.ROWS;i++)
-			right.push(this.board[i][c]);
-		for(var i = c + 1;i < this.COLS;i++)
-			bottom.push(this.board[r][i]);
-
-		return [left,top,right,bottom];
-	}
-
-}
-
-class Cell {
-	constructor( xTL, yTL, xSz, ySz, symbol = "", colour = "white") {
-		this.symbol = symbol;
-		this.TLx = xTL;
-		this.TLy = yTL;
-		this.BRx = xTL + xSz;
-		this.BRy = yTL + ySz;
-		this.xSz = xSz;
-		this.ySz = ySz;
+	constructor(colour) {
 		this.colour = colour;
-	}
-
-	sets(symb, colour) {
-			if(!this.isSet()) {
-			this.symbol = symb;
-			this.colour = colour;
-			return true;
-		} return false;
-	}
-
-	collided(mouseX, mouseY) {
-		if(mouseX <= this.BRx && mouseX >= this.TLx)
-			if(mouseY <= this.BRy && mouseY >= this.TLy)
-				return true;
-		return false;
-	}
-
-	isSet() {
-		if(this.symbol != "")
-			return true;
-		return false;
-	}
-
-	draw() {
-		fill(this.colour);
-		rect(this.TLx, this.TLy, this.xSz, this.ySz);
+		print("Player " + colour + " created");
 	}
 
 	toString() {
-		return this.symbol
+		return this.colour;
 	}
 }
 
-function check(board, x, y, tolerance = rows) {
+class Human extends Player {
+
+	constructor( colour) {
+		super(colour);
+	}
+
+	getTurn(board) {
+		return [-1,-1];
+	}
+}
+
+class Bot extends Player {
+
+	constructor(colour) {
+		super(colour);
+	}
+
+	minimax(board, max) {
+		//board.placeRandom(this.colour);
+	}
+
+	getTurn(board) {
+		var max = 0;
+		/*
+		for(var r =0;r < board.ROWS;r++) {
+			for(var c = 0;c < board.COLS;c++) {
+				if(board[r][c].toString() == "") {
+					this.minimax(board, true);
+				}
+			}
+		}
+		//return [x,y];
+*/		
+	//	for(var r = 0;r < board.rows();r++) {
+
+		//	for(var c = 0;c < board.cols();c++) {
+		//		if(!board.get(r,c).isSet()) {
+		//			print("bot:::" + r + " " + c);
+		//			return [r,c];
+		//		}
+		//	}
+		//}
+	//	return [x,y];
+		var x = ((Math.random() * 100) | 0) % board.rows();
+		print(x);
+		var y = ((Math.random() * 100) | 0) % board.cols();
+		print(y);
+		return[x, y];
+	}
+}
+
+
+class Game {
+	constructor() {
+		this.players = [];
+		for(let o of arguments)
+			if(o instanceof Player)
+				this.players.push(o);
+		this.ROWS = 3;
+		this.COLS = 3;
+		this.setup();
+	}
+
+	check(x, y, tolerance = this.ROWS) {
 	//var [left, top, right, bottom] 
 
 	//var [topLeft, topRight, bottomRight, bottomLeft]
 
-	var placer = board.get(x,y);
+		var placer = this.board.get(x,y);
 
-	
-	var neighbours = [board.getNeighboursStraight(x, y), board.getNeighboursDiag(x, y)];
+		var neighbours = [this.board.getNeighboursStraight(x, y), this.board.getNeighboursDiag(x, y)];
+		var won = false;
+		for(let directions of neighbours) {
+			for(let direction of directions) {
+				if(won) return placer.colour;
 
-	var won = false;
-	for(let directions of neighbours) {
-		for(let direction of directions) {
-			if(won) return placer.symbol;
+				if(direction.length >= tolerance - 1)
+					won = true;
+				for(var neighbourIndex = 0;neighbourIndex < direction.length && won;neighbourIndex++) {
+					var neighbour = direction[neighbourIndex];
+					if(placer.toString() != neighbour.toString())
+						won = false;
+				}
+			}
+		}
+		if(won) return placer.colour;
+		return "";
+	}	
 
-			if(direction.length >= tolerance - 1)
-				won = true;
-			for(var neighbourIndex = 0;neighbourIndex < direction.length && won;neighbourIndex++) {
-				var neighbour = direction[neighbourIndex];
-				if(placer.toString() != neighbour.toString())
-					won = false;
+	setup() {
+		this.gameOver = false;
+		this.board = new Board(this.ROWS,this.COLS);
+		this.turn = 0;
+	}
+
+	random() {
+		setup();
+
+		for(var r = 0;r < this.ROWS;r++) {
+			for(var c = 0;c < this.COLS;c++) {
+				var rand = Math.random() * (this.players.length + 1);
+				if(rand < this.players.length)
+					board.sets(r, c, this.players[rand].colour);
 			}
 		}
 	}
-	if(won) return placer.symbol;
-	return "";
+
+	mouseClick() {
+		this.getTurn();
+	}
+
+	getCurrentPlayer() {
+		return this.players[this.turn % this.players.length];
+	}
+
+	tick() {
+		this.draw();
+		this.getTurn();
+	}
+
+	getTurn() {
+		if(this.gameOver) return;
+		var player = this.getCurrentPlayer();
+
+
+	//	if(player instanceof Human) {
+		//	var placer = this.players[this.turn % this.players.length];
+		//	var [x, y] = this.board.place(player, mouseX, mouseY);
+
+	//	}
+	//	else {
+	//		var [x, y] = player.getTurn(this.board);
+	//	}
+		var[x, y] = [-1,-1];
+
+		// var [x1,y1] = player.getTurn(this.board);
+
+		 if(player instanceof Bot) {
+		 	[x,y] = this.board.placeRandom(player.colour);
+		 	//[x, y] = this.board.place(player, -x, -y);
+		 }
+		 else if(player instanceof Human) {
+		 	if(mouseIsPressed) {
+		 		[x, y] = this.board.place(player, mouseX, mouseY);
+		 	}
+		 }
+		 	
+		if(x >= 0 && y >= 0) {
+			var winner = this.check(x, y);
+			if(winner != "white" && winner != "") {
+				textToDisplay.push("Player " + winner + " has won!");
+				this.gameOver = true;
+			}
+			this.turn++;
+		}
+	}
+
+	draw() {
+		this.board.draw();
+		fill(0);
+		text("It is player " + this.getCurrentPlayer() + "'s turn", 10, this.board.COLS * this.board.ySz + 30);
+	}
 }
+
 
 function setup() {
 	createCanvas(600, 600);
-	board = new Board(rows, cols);
-	board.init();
+	print("hi");
+	 game = new Game(new Human("Blue"), new Bot("Red"));
 }
 
-
 function mouseClicked() {
-
-	if(!gameOver)
-		var [x, y] = board.place(mouseX, mouseY);
-	if(x >= 0 && y >= 0) {
-		var winner = check(board, x, y);
-		print("w:" + winner);
-		if(winner != "") {
-			textToDisplay.push("Player " + players[winner] + " has won!");
-			gameOver = true;
-		}
-		print(players[winner]);
-	}
+	game.mouseClick();
 }
 
 function draw() {
 	clear();
 
 	fill(0);
-
-	for(let t of textToDisplay)
-		text(t,10, board.COLS * board.ySz + 40);
-
-	text("It is player " + board.getTurn() + "'s turn", 10,board.COLS * board.ySz + 30);
-
-	board.draw();
-
-	//ellipse(mouseX, mouseY, 80, 80);
+	for(var i = 0;i < textToDisplay.length;i++) {
+		text(textToDisplay[i],10, game.board.COLS * game.board.ySz + ((i + 4) * 10));
+	}
+	game.tick();
+//	board.draw();
 }
